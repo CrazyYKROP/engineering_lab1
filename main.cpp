@@ -4,6 +4,7 @@
 #include <string>
 #include <sstream>
 #include <tuple>
+#include "Board.h"
 
 const int WIDTH = 19;
 const int HEIGHT = 19;
@@ -79,11 +80,21 @@ void write_to_file(const std::string& file_path, const std::vector<std::pair<int
 }
 
 int main() {
-    auto boards = read_input_file("input.txt");
-    std::vector<std::pair<int, std::tuple<int, int, int>>> results;
-    for (const auto& [index, board] : boards) 
-        results.push_back(std::pair(index, check_win(board)));
+    // auto boards = read_input_file("input.txt");
+    // std::vector<std::pair<int, std::tuple<int, int, int>>> results;
+    // for (const auto& [index, board] : boards) 
+    //     results.push_back(std::pair(index, check_win(board)));
     
-    write_to_file("output.txt", results);
+    // write_to_file("output.txt", results);
+    BitBoard board;
+    board.loadFromFile("input.txt"); // Specify the file path
+    // Create a 19x19 vector of vectors initialized with zeros
+    std::vector<std::vector<int>> matrix(19, std::vector<int>(19, 1));
+        // Create a 19x19 array of ints initialized to zero
+    int aMatrix[19][19] = {0};  // All elements initialized to zero
+    std::cout<< "Read board size in byte:"<< sizeof(board) << "|" << sizeof(matrix) <<"|"<< sizeof(aMatrix) << std::endl;
+    board.print(); // Print the loaded board
+
+    return 0;
     return 0;
 }
