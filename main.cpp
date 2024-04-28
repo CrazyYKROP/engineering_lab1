@@ -8,7 +8,8 @@
 const int WIDTH = 19;
 const int HEIGHT = 19;
 
-std::vector<std::pair<int, std::vector<std::vector<int>>>> read_input_file(const std::string& file_path) {
+//not effective usage of memmory using 19*19*4 ~ 1500 bytes can use 46 bytes instead to store whole board and game number up to 64
+std::vector<std::pair<int, std::vector<std::vector<int>>>> read_file(const std::string& file_path) {
     std::ifstream file(file_path);
     if (!file.is_open()) {
         std::cerr << "Failed to open file\n";
@@ -36,7 +37,7 @@ std::vector<std::pair<int, std::vector<std::vector<int>>>> read_input_file(const
     return boards;
 }
 
-std::tuple<int, int, int> check_win(const std::vector<std::vector<int>>& board) {
+std::tuple<int, int, int> process_boards(const std::vector<std::vector<int>>& board) {
     std::vector<std::pair<int, int>> dir = {{0, 1}, {1, 0}, {1, 1}, {-1, 1}};
     for (int i = 0; i < HEIGHT; ++i) {
         for (int j = 0; j < WIDTH; ++j) {
@@ -79,10 +80,10 @@ void write_to_file(const std::string& file_path, const std::vector<std::pair<int
 }
 
 int main() {
-    auto boards = read_input_file("input.txt");
+    auto boards = read_file("input.txt");
     std::vector<std::pair<int, std::tuple<int, int, int>>> results;
     for (const auto& [index, board] : boards) 
-        results.push_back(std::pair(index, check_win(board)));
+        results.push_back(std::pair(index, process_boards(board)));
     
     write_to_file("output.txt", results);
     return 0;
