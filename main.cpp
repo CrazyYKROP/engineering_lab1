@@ -4,87 +4,67 @@
 #include <string>
 #include <sstream>
 #include <tuple>
+#include <queue>
+#include "Board.h"
 
-const int WIDTH = 19;
-const int HEIGHT = 19;
+struct BoardData {
+    int index;
+    BitBoard board;
+    std::string readResult;
+};
 
-//not effective usage of memmory using 19*19*4 ~ 1500 bytes can use 46 bytes instead to store whole board and game number up to 64
-std::vector<std::pair<int, std::vector<std::vector<int>>>> read_file(const std::string& file_path) {
-    std::ifstream file(file_path);
-    if (!file.is_open()) {
-        std::cerr << "Failed to open file\n";
-        return {};
-    }
+std::queue<BoardData> globalQueue;  // Global queue to hold boards
 
-    std::vector<std::pair<int, std::vector<std::vector<int>>>> boards;
+void loadFromFile(const std::string& filename) {
+    std::ifstream file(filename);
+    int boardIndex = 0;
     while (!file.eof()) {
         std::string line;
         std::getline(file, line);
-        if(line.empty()) continue;
-        int index = std::stoi(line);
-        std::vector<std::vector<int>> board(HEIGHT, std::vector<int>(WIDTH));
-        for (int i = 0; i < HEIGHT; ++i) {
-            std::getline(file, line);
-            for (int j = 0; j < WIDTH; ++j) {
-                board[i][j] = line[j] - '0';
+        if (line.empty()) continue;
+
+        BitBoard newBoard;
+        int rHeight = 0;
+        bool success = true;
+        std::cout << "Reading board index: " << boardIndex << std::endl;
+        for (int i = 0; i < BitBoard::SIZE; i++) {
+            if (!std::getline(file, line) || line.empty()) {
+                success = false;
+                break;
             }
-        }
-
-        boards.push_back({index, board});
-    }
-
-    file.close();
-    return boards;
-}
-
-std::tuple<int, int, int> process_boards(const std::vector<std::vector<int>>& board) {
-    std::vector<std::pair<int, int>> dir = {{0, 1}, {1, 0}, {1, 1}, {-1, 1}};
-    for (int i = 0; i < HEIGHT; ++i) {
-        for (int j = 0; j < WIDTH; ++j) {
-            if (board[i][j] != 0) {
-                int color = board[i][j];
-                for (auto& [dx, dy] : dir) {
-                    int combo = 1;
-                    int x = i, y = j;
-                    while (x + dx >= 0 && x + dx < HEIGHT && y + dy >= 0 && y + dy < WIDTH && board[x + dx][y + dy] == color) {
-                        combo++;
-                        x += dx;
-                        y += dy;
-                    }
-                    x = i, y = j;
-                    while (x - dx >= 0 && x - dx < HEIGHT && y - dy >= 0 && y - dy < WIDTH && board[x - dx][y - dy] == color) {
-                        combo++;
-                        x -= dx;
-                        y -= dy;
-                    }
-                    if (combo >= 5) {
-                        return {color, i + 1, j + 1};
-                    }
+            int rWidth = 0;
+            std::istringstream rowStream(line);
+            char symbol;
+            while (rowStream.get(symbol)) {
+                if (isdigit(symbol)) {
+                    uint8_t value = symbol - '0';
+                    if (value > 2) continue;
+                    newBoard.set(rHeight, rWidth, static_cast<int>(value));
+                    rWidth++;
                 }
+                if (rWidth == BitBoard::SIZE) break;
             }
+            if (rWidth != BitBoard::SIZE) {
+                success = false;
+                break;
+            }
+            rHeight++;
         }
-    }
-    return {0, 0, 0};
-}
+        if (rHeight != BitBoard::SIZE) success = false;
 
-void write_to_file(const std::string& file_path, const std::vector<std::pair<int, std::tuple<int, int, int>>>& results) {
-    std::ofstream file(file_path);
-    if (!file.is_open()) {
-        std::cerr << "Failed to open file\n";
-        return;
+        globalQueue.push({ boardIndex, newBoard, success ? "Success" : "Failure" });
+        boardIndex++;
     }
-    for(const auto& [index, result] : results)
-        file << "Board number:" << index << "\n" << std::get<0>(result) << "\n" << std::get<1>(result) << " " << std::get<2>(result) << "\n\n";
-
-    file.close();
 }
 
 int main() {
-    auto boards = read_file("input.txt");
-    std::vector<std::pair<int, std::tuple<int, int, int>>> results;
-    for (const auto& [index, board] : boards) 
-        results.push_back(std::pair(index, process_boards(board)));
-    
-    write_to_file("output.txt", results);
+    loadFromFile("path_to_file.txt"); // Specify the file path
+    while (!globalQueue.empty()) {
+        auto& bd = globalQueue.front();
+        std::cout << "Board Index: " << bd.index << " - Read Result: " << bd.readResult << std::endl;
+        bd.board.print();
+        globalQueue.pop();
+    }
+
     return 0;
 }
