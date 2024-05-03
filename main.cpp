@@ -9,16 +9,19 @@
 #include <mutex>
 #include <condition_variable>
 #include "Board.h"
-
+using BOARD_RESULT = std::tuple<int, int, int>;
 struct BoardData {
     int index;
     BitBoard board;
 };
 
+
 std::queue<BoardData> globalQueue;  // Global queue to hold boards
 std::string resultFile = "output.txt";
 
-std::tuple<int, int, int> check_win(const BitBoard& board) {
+const int MAX_COMBO = 5;
+
+BOARD_RESULT check_win(const BitBoard& board) {
     std::vector<std::pair<int, int>> directions = {{0, 1}, {1, 0}, {1, 1}, {-1, 1}};
     for (int i = 0; i < BitBoard::SIZE; ++i) {
         for (int j = 0; j < BitBoard::SIZE; ++j) {
@@ -38,7 +41,7 @@ std::tuple<int, int, int> check_win(const BitBoard& board) {
                         x -= dx;
                         y -= dy;
                     }
-                    if (combo >= 5) {
+                    if (combo >= MAX_COMBO) {
                         return {color, i + 1, j + 1};
                     }
                 }
@@ -48,7 +51,7 @@ std::tuple<int, int, int> check_win(const BitBoard& board) {
     return {0, 0, 0};
 }
 
-void write_to_file(const std::string& file_path, const std::tuple<int, int, int>& results,const int& index) {
+void write_to_file(const std::string& file_path, const BOARD_RESULT& results,const int& index) {
     std::ofstream file(file_path, std::ios::app);
     if (!file.is_open()) {
         std::cerr << "Failed to open file\n";
